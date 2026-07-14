@@ -7,5 +7,6 @@
 #include <windows.h>
 #include <psapi.h>
 
+int vk_to_char(DWORD vkCode, char *out);
 
 #endif
