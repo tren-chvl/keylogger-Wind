@@ -4,7 +4,7 @@ DIR_SRC = src
 DIR_OBJ = obj
 
 CC = cl
-CFLAGS = /Wall /WX /EHsc
+CFLAGS = /Wall /WX /EHsc -lpsapi
 
 SRC = $(DIR_SRC)\svc.c
 OBJ = $(DIR_OBJ)\svc.obj
