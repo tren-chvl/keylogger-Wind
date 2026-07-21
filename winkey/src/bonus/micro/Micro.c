@@ -1,11 +1,48 @@
 #include "../../winkey.h"
 
 
-void capture_micro_demo(void)
+void write_wav_header(FILE *f, WAVEFORMATEX *fmt)
+{
+	DWORD chunkSize = 36;
+	DWORD dataSize  = 0;
+
+	fwrite("RIFF", 1, 4, f);
+	fwrite(&chunkSize, 4, 1, f);
+	fwrite("WAVE", 1, 4, f);
+	fwrite("fmt ", 1, 4, f);
+	DWORD subChunk1Size = 16;
+	fwrite(&subChunk1Size, 4, 1, f);
+	fwrite(&fmt->wFormatTag, 2, 1, f);
+	fwrite(&fmt->nChannels, 2, 1, f);
+	fwrite(&fmt->nSamplesPerSec, 4, 1, f);
+	fwrite(&fmt->nAvgBytesPerSec, 4, 1, f);
+	fwrite(&fmt->nBlockAlign, 2, 1, f);
+	fwrite(&fmt->wBitsPerSample, 2, 1, f);
+	fwrite("data", 1, 4, f);
+	fwrite(&dataSize, 4, 1, f);
+}
+
+
+void update_wav_header(FILE *f, WAVEFORMATEX *fmt, DWORD totalBytes)
+{
+	DWORD chunkSize = 36 + totalBytes;
+	fseek(f, 4, SEEK_SET);
+	fwrite(&chunkSize, 4, 1, f);
+	fseek(f, 40, SEEK_SET);
+	fwrite(&totalBytes, 4, 1, f);
+}
+
+void write_samples(FILE *f, BYTE *data, UINT32 numFrames, WAVEFORMATEX *fmt, DWORD *totalBytes)
+{
+	UINT32 bytes = numFrames * fmt->nBlockAlign;
+	fwrite(data, 1, bytes, f);
+	*totalBytes += bytes;
+}
+
+void capture_micro(void)
 {
 	HRESULT hr;
 	CoInitialize(NULL);
-
 	IMMDeviceEnumerator *enumerator = NULL;
 	IMMDevice *device = NULL;
 	IAudioClient *audioClient = NULL;
@@ -26,34 +63,41 @@ void capture_micro_demo(void)
 		return;
 	if (!start_service(&hr, audioClient))	
 		return;
-	for (int i = 0; i < 10; i++)
+	FILE *f = fopen("capture.wav", "wb");
+	if (!f) return;
+	write_wav_header(f, format);
+	DWORD totalBytes = 0;
+	printf("Enregistrement... Appuie sur ESC pour arrêter.\n");
+	while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000))
 	{
-		get_buffer(&hr, captureClient);
-		Sleep(50);
+		BYTE *data;
+		UINT32 numFrames;
+		DWORD flags;
+
+		hr = captureClient->lpVtbl->GetBuffer(captureClient,&data,
+		&numFrames,&flags,NULL,NULL
+		);
+		if (SUCCEEDED(hr))
+		{
+			printf("Frames: %u | Flags: 0x%08X\n", numFrames, flags);
+			if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
+			{
+				printf("→ Son reçu !\n");
+				write_samples(f, data, numFrames, format, &totalBytes);
+			}
+			else
+			{
+				printf("→ Silence\n");
+			}
+		captureClient->lpVtbl->ReleaseBuffer(captureClient, numFrames);
+		}
+		Sleep(5);
 	}
 	audioClient->lpVtbl->Stop(audioClient);
+	update_wav_header(f, format, totalBytes);
+	fclose(f);
+	printf("Capture terminée. %u octets écrits dans capture.wav\n", totalBytes);
 	CoUninitialize();
 }
 
 
-int get_buffer(HRESULT *hr, IAudioCaptureClient *captureClient)
-{
-	BYTE *data = NULL;
-	UINT32 numFrames = 0;
-	DWORD flags = 0;
-
-	*hr = captureClient->lpVtbl->GetBuffer(
-		captureClient,
-		&data,
-		&numFrames,
-		&flags,
-		NULL,
-		NULL
-	);
-
-	if (!SUCCEEDED(*hr))
-		return 0;
-	printf("Buffer audio reçu (DEMO) : %u frames\n", numFrames);
-	captureClient->lpVtbl->ReleaseBuffer(captureClient, numFrames);
-	return 1;
-}

