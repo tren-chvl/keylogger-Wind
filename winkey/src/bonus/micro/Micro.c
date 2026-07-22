@@ -82,12 +82,12 @@ void capture_micro(void)
 			printf("Frames: %u | Flags: 0x%08X\n", numFrames, flags);
 			if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
 			{
-				printf("→ Son reçu !\n");
+				printf("→ Son reçu CHEF !!\n");
 				write_samples(f, data, numFrames, format, &totalBytes);
 			}
 			else
 			{
-				printf("→ Silence\n");
+				printf("→ Silence pas de bruit chef...\n");
 			}
 		captureClient->lpVtbl->ReleaseBuffer(captureClient, numFrames);
 		}

