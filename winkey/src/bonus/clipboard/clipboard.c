@@ -1,4 +1,5 @@
 #include "../../../winkey.h"
+
 void read_clipboard(char *buffer, size_t size)
 {
 	buffer[0] = '\0';

