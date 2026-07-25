@@ -1,4 +1,4 @@
-#include "../../winkey.h"
+#include "../../../winkey.h"
 
 
 void hide_process(wchar_t *new_name)

@@ -31,7 +31,7 @@ int save_bitmap(LPCWSTR path, HBITMAP hbm, HDC hdc)
     DWORD dwSizeOfHeaders = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
     DWORD dwSizeOfImage   = dwBmpSize;
     DWORD dwFileSize      = dwSizeOfHeaders + dwSizeOfImage;
-    bmfHeader.bfType  = 0x4D42; // 'BM'
+    bmfHeader.bfType  = 0x4D42;
     bmfHeader.bfSize  = dwFileSize;
     bmfHeader.bfOffBits = dwSizeOfHeaders;
     DWORD written = 0;

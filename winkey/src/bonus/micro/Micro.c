@@ -1,4 +1,4 @@
-#include "../../winkey.h"
+#include "../../../winkey.h"
 
 
 void write_wav_header(FILE *f, WAVEFORMATEX *fmt)
