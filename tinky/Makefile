@@ -1,27 +1,39 @@
 NAME = svc.exe
 
-DIR_SRC = src
-DIR_OBJ = obj
-
 CC = cl
-CFLAGS = /Wall /WX /EHsc -lpsapi
+CFLAGS = /Wall /WX /D_WIN32_WINNT=0x0A00 /wd4668 /D_CRT_SECURE_NO_WARNINGS -Iinclude
 
-SRC = $(DIR_SRC)\svc.c
-OBJ = $(DIR_OBJ)\svc.obj
+OBJ = obj\main.obj obj\scm.obj obj\service.obj obj\token.obj obj\winkey.obj
 
 all: $(NAME)
 
 $(NAME): $(OBJ)
-    $(CC) $(CFLAGS) $(OBJ) /Fe:$(NAME)
+	$(CC) $(CFLAGS) $(OBJ) /Fe$(NAME) advapi32.lib
 
-$(OBJ): $(SRC)
-    if not exist $(DIR_OBJ) mkdir $(DIR_OBJ)
-    $(CC) $(CFLAGS) /c $(SRC) /Fo$(OBJ)
+obj\main.obj:
+	@if not exist obj mkdir obj
+	$(CC) $(CFLAGS) /c src\main.c /Foobj\main.obj
+
+obj\scm.obj:
+	@if not exist obj mkdir obj
+	$(CC) $(CFLAGS) /c src\scm.c /Foobj\scm.obj
+
+obj\service.obj:
+	@if not exist obj mkdir obj
+	$(CC) $(CFLAGS) /c src\service.c /Foobj\service.obj
+
+obj\token.obj:
+	@if not exist obj mkdir obj
+	$(CC) $(CFLAGS) /c src\token.c /Foobj\token.obj
+
+obj\winkey.obj:
+	@if not exist obj mkdir obj
+	$(CC) $(CFLAGS) /c src\winkey.c /Foobj\winkey.obj
 
 clean:
-    if exist $(DIR_OBJ) del /Q $(DIR_OBJ)\*.obj
+	if exist obj rmdir /S /Q obj
 
 fclean: clean
-    if exist $(NAME) del /Q $(NAME)
+	if exist $(NAME) del /Q $(NAME)
 
 re: fclean all
