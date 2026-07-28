@@ -1,6 +1,5 @@
 #include "../winkey.h"
 
-
 int vk_to_char(DWORD vkCode, char *out)
 {
 	BYTE keyboardState[256];

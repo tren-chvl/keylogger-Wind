@@ -1,3 +1,8 @@
+#include <initguid.h>
+#include <mmdeviceapi.h>
+#include <audioclient.h>
+
+
 #include "../../../winkey.h"
 
 
