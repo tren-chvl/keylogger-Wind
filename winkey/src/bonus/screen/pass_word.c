@@ -1,4 +1,4 @@
-#include "../../../winkey.h"
+#include "winkey.h"
 
 int is_password_field(HWND hwnd)
 {

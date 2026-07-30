@@ -1,4 +1,4 @@
-#include "../../../winkey.h"
+#include "winkey.h"
 
 int read_password_from_control(HWND hEdit, char *out, size_t out_size)
 {

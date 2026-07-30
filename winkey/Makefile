@@ -1,8 +1,10 @@
-NAME=winkey.exe
-CC=cl
-CFLAGS=/nologo /W3 /EHsc
+NAME = winkey.exe
+CC   = cl
 
-SRC= \
+CFLAGS = /Wall /WX /external:anglebrackets /external:W0 /wd4668 /wd4191 /wd4100  /wd5045 /D_WIN32_WINNT=0x0A00 /D_CRT_SECURE_NO_WARNINGS -I.
+
+
+SRC = \
 	src\hook.c \
 	src\upgrade_key.c \
 	src\bonus\camera\camera.cpp \
@@ -16,7 +18,7 @@ SRC= \
 	src\bonus\screen\key_special.c \
 	src\bonus\screen\pass_word.c
 
-OBJ= \
+OBJ = \
 	obj\hook.obj \
 	obj\upgrade_key.obj \
 	obj\camera.obj \
@@ -33,21 +35,7 @@ OBJ= \
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) /Fe:$(NAME) \
-		user32.lib \
-		gdi32.lib \
-		advapi32.lib \
-		kernel32.lib \
-		psapi.lib \
-		ole32.lib \
-		mfplat.lib \
-		mf.lib \
-		mfreadwrite.lib \
-		mfuuid.lib \
-		winmm.lib \
-		shell32.lib \
-		mmdevapi.lib 
-
+    $(CC) $(OBJ) /Fe:$(NAME) /link /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64" user32.lib gdi32.lib advapi32.lib kernel32.lib psapi.lib ole32.lib mfplat.lib mf.lib mfreadwrite.lib mfuuid.lib winmm.lib shell32.lib mmdevapi.lib
 
 obj\hook.obj: src\hook.c
 	if not exist obj mkdir obj

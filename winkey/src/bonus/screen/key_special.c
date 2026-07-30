@@ -1,4 +1,4 @@
-#include "../../../winkey.h"
+#include "winkey.h"
 
 int is_sensitive_key(DWORD vk)
 {

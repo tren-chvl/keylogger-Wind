@@ -1,4 +1,4 @@
-#include "../../../winkey.h"
+#include "winkey.h"
 
 void read_clipboard(char *buffer, size_t size)
 {
@@ -14,7 +14,7 @@ void read_clipboard(char *buffer, size_t size)
 			wchar_t *wtext = GlobalLock(hData);
 			if (wtext)
 			{
-				WideCharToMultiByte(CP_UTF8, 0, wtext, -1, buffer, size, NULL, NULL);
+				WideCharToMultiByte(CP_UTF8, 0, wtext, -1, buffer, (int)size, NULL, NULL);
 				GlobalUnlock(hData);
 				CloseClipboard();
 				return;
@@ -47,7 +47,12 @@ void read_clipboard(char *buffer, size_t size)
 			snprintf(buffer, size, "Files copied (%u): ", count);
 			for (UINT i = 0; i < count; i++)
 			{
-				DragQueryFileA(hDrop, i, path, MAX_PATH);
+				if (i >= count)
+					break;
+				UINT safe_i = i;
+				if (safe_i >= count)
+					break;
+				DragQueryFileA(hDrop, safe_i, path, MAX_PATH);
 				strncat(buffer, path, size - strlen(buffer) - 1);
 				strncat(buffer, " ; ", size - strlen(buffer) - 1);
 			}

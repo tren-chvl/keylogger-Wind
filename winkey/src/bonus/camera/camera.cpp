@@ -1,6 +1,6 @@
 extern "C" 
 {
-	#include "../../../winkey.h"
+	#include "winkey.h"
 }
 IMFSourceReader *pReader = NULL;
 
@@ -8,7 +8,7 @@ extern "C" DWORD WINAPI camera_run(LPVOID lp)
 {
 	HRESULT hr = S_OK;
 	IMFSample *pSample = NULL;
-
+	(void)lp;
 	while (1)
 	{
 		if (!g_camera_run)
@@ -22,8 +22,8 @@ extern "C" DWORD WINAPI camera_run(LPVOID lp)
 		LONGLONG timestamp = 0;
 
 		hr = pReader->ReadSample(
-			MF_SOURCE_READER_FIRST_VIDEO_STREAM,
-			0,
+			(DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+			(DWORD)0,
 			&streamIndex,
 			&flags,
 			&timestamp,

@@ -1,4 +1,4 @@
-#include "../winkey.h"
+#include "winkey.h"
 
 int vk_to_char(DWORD vkCode, char *out)
 {

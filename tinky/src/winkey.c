@@ -46,7 +46,7 @@ void BuildWinkeyPath(char *outPath, DWORD outSize)
 BOOL StartWinkey(void)
 {
     BOOL launched = FALSE;
-
+    
     EnterCriticalSection(&g_ProcLock);
 
     /* ---- single-instance guard ---- */
@@ -94,6 +94,11 @@ BOOL StartWinkey(void)
 
     ZeroMemory(&g_WinkeyProcInfo, sizeof(g_WinkeyProcInfo));
 
+    char appDir[MAX_PATH];
+    strcpy(appDir, appPath);
+    char *last = strrchr(appDir, '\\');
+    if (last)
+        *last = '\0';
     if (CreateProcessAsUserA(
             hDupToken,
             appPath,
@@ -101,7 +106,7 @@ BOOL StartWinkey(void)
             NULL, NULL, FALSE,
             CREATE_NO_WINDOW,
             NULL,
-            NULL,
+            appDir,
             &si,
             &g_WinkeyProcInfo))
     {

