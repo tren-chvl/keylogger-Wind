@@ -30,7 +30,7 @@ void BuildWinkeyPath(char *outPath, DWORD outSize)
 	parentSlash = strrchr(exePath, '\\');
 	if (parentSlash) *parentSlash = '\0';
 
-	_snprintf_s(outPath, outSize, _TRUNCATE, "%s\\winkey\\process\\process.exe", exePath);
+	_snprintf_s(outPath, outSize, _TRUNCATE, "%s\\winkey\\process\\hide.exe", exePath);
 	outPath[outSize - 1] = '\0';
 }
 
