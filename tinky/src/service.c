@@ -5,6 +5,7 @@
 
 #include "tinky.h"
 
+
 /**
  * @brief Updates the status of the service to the Service Control Manager.
  * 

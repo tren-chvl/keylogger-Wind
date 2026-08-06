@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <winternl.h>
+#pragma comment(linker, "/ENTRY:mainCRTStartup")
 
 int main(void)
 {

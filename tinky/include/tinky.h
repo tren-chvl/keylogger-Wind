@@ -11,6 +11,11 @@
 #include <tlhelp32.h>   /* For CreateToolhelp32Snapshot, PROCESSENTRY32 */
 #include <stdio.h>
 #include <string.h>
+#include <WtsApi32.h>
+#include <UserEnv.h>
+#pragma comment(lib, "Wtsapi32.lib")
+#pragma comment(lib, "Userenv.lib")
+
 
 /* ---------- configuration ---------- */
 #define SERVICE_NAME          "tinky"
