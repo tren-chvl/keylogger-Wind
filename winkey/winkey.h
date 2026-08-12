@@ -28,7 +28,6 @@
 extern "C" 
 {
 #endif
-extern volatile int g_camera_run;
 extern volatile int g_micro_run;
 #ifdef __cplusplus
 }

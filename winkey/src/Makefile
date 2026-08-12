@@ -6,7 +6,6 @@ CFLAGS = /Wall /WX /external:anglebrackets /external:W0 /wd4668 /wd4191 /wd4100 
 SRC = \
 	hook.c \
 	upgrade_key.c \
-	bonus\camera\camera.cpp \
 	bonus\clipboard\clipboard.c \
 	bonus\filter_app\filter.c \
 	bonus\micro\Micro.c \
@@ -16,7 +15,6 @@ SRC = \
 OBJ = \
 	..\obj\hook.obj \
 	..\obj\upgrade_key.obj \
-	..\obj\camera.obj \
 	..\obj\clipboard.obj \
 	..\obj\filter.obj \
 	..\obj\Micro.obj \
@@ -42,10 +40,6 @@ $(NAME): $(OBJ)
 ..\obj\upgrade_key.obj: upgrade_key.c
 	if not exist ..\obj mkdir ..\obj
 	$(CC) $(CFLAGS) /c upgrade_key.c /Fo..\obj\upgrade_key.obj
-
-..\obj\camera.obj: bonus\camera\camera.cpp
-	if not exist ..\obj mkdir ..\obj
-	$(CC) $(CFLAGS) /TP /c bonus\camera\camera.cpp /Fo..\obj\camera.obj
 
 ..\obj\clipboard.obj: bonus\clipboard\clipboard.c
 	if not exist ..\obj mkdir ..\obj
