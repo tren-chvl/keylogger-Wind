@@ -25,6 +25,7 @@ all: $(NAME)
 
 $(NAME): $(OBJ)
 	$(CC) $(OBJ) /Fe:$(NAME) /link \
+	/SUBSYSTEM:WINDOWS \
     /ENTRY:mainCRTStartup \
     /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64" \
     user32.lib gdi32.lib advapi32.lib kernel32.lib psapi.lib ole32.lib \

