@@ -182,7 +182,7 @@ static int  exec_command(const char *cmd, char *outbuf, int outsize)
     if (total == 0)
     {
         strncpy(outbuf, "(no output)\n", outsize - 1);
-        total = strlen(outbuf);
+        total = (int)strlen(outbuf);
     }
     return total;
 }

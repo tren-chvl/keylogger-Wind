@@ -4,7 +4,7 @@ import time
 
 HOST = "0.0.0.0"
 PORT = 8888
-BINARY = "C:\\Users\\Pixyde\\a.exe"  # the new binary to push
+BINARY = "C:\\Users\\marcc\\test.exe"  # the new binary to push
 
 with open(BINARY, "rb") as f:
     data = f.read()
