@@ -196,17 +196,6 @@ For this reason, **Wind should only be executed in controlled environments** suc
 
 > 🟠 **Experimental**
 
-Wind is a collaborative research project and may change significantly as development continues.
-
-Expect:
-
-* unfinished components
-* experimental code
-* breaking changes
-* platform-specific behavior
-
----
-
 # 🌌 Why "Wind"?
 
 Two components.
@@ -229,23 +218,8 @@ One project.
 ```
 
 ---
-
-# ⭐ Credits
-
-Made with caffeine, C, questionable debugging sessions and a lot of `git push`.
-
 ### Built by
 
 **tren-chvl × Pixyde**
 
 > *"Two codebases. One experiment."* 🕷️
-
----
-
-## ⚠️ Disclaimer
-
-This repository is provided for **educational and authorized security research purposes only**.
-
-The authors do not encourage or endorse unauthorized monitoring, credential theft, privacy invasion, or deployment against systems without permission.
-
-Use responsibly. 🔐
